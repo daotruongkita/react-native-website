@@ -1,49 +1,145 @@
----
-id: environment-setup
-title: Get Started with React Native
-hide_table_of_contents: true
----
 
-import PlatformSupport from '@site/src/theme/PlatformSupport';
-import BoxLink from '@site/src/theme/BoxLink';
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đăng Nhập</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        input, button { margin: 5px; padding: 8px; }
+    </style>
+</head>
+<body>
+    <h2>Đăng Ký</h2>
+    <input type="text" id="regUsername" placeholder="Tên đăng nhập">
+    <input type="password" id="regPassword" placeholder="Mật khẩu">
+    <input type="text" id="regFullname" placeholder="Họ và tên">
+    <button onclick="registerUser()">Đăng Ký</button>
 
-**React Native allows developers who know React to create native apps.** At the same time, native developers can use React Native to gain parity between native platforms by writing common features once.
+    <h2>Đăng Nhập</h2>
+    <input type="text" id="loginUsername" placeholder="Tên đăng nhập">
+    <input type="password" id="loginPassword" placeholder="Mật khẩu">
+    <button onclick="loginUser()">Đăng Nhập</button>
 
-We believe that the best way to experience React Native is through a **Framework**, a toolbox with all the necessary APIs to let you build production ready apps.
+    <h2>Quản lý tài khoản</h2>
+    <button onclick="logoutUser()">Đăng Xuất</button>
+    <button onclick="showBalance()">Xem Số Dư</button>
+    <button onclick="addMoney(5000)">+5.000 VNĐ</button>
+    <button onclick="subtractMoney(3000)">-3.000 VNĐ</button>
+    <button onclick="lockAccount()">Khóa Tài Khoản</button>
+    <p id="message"></p>
 
-You can also use React Native without a Framework, however we’ve found that most developers benefit from using a React Native Framework like [Expo](https://expo.dev). Expo provides features like file-based routing, high-quality universal libraries, and the ability to write plugins that modify native code without having to manage native files.
+    <script>
+        class User {
+            constructor(username, password, fullname, balance = 10000) {
+                this.username = username;
+                this.password = password;
+                this.fullname = fullname;
+                this.balance = balance;
+                this.locked = false;
+            }
 
-<details>
-<summary>Can I use React Native without a Framework?</summary>
+            formatBalance() {
+                return this.balance.toLocaleString('vi-VN') + ' VNĐ';
+            }
+        }
 
-Yes. You can use React Native without a Framework. **However, if you’re building a new app with React Native, we recommend using a Framework.**
+        class AuthSystem {
+            constructor() {
+                this.users = [];
+                this.currentUser = null;
+            }
 
-In short, you’ll be able to spend time writing your app instead of writing an entire Framework yourself in addition to your app.
+            register(username, password, fullname) {
+                if (this.users.some(user => user.username === username)) {
+                    return 'Tài khoản đã tồn tại!';
+                }
+                const newUser = new User(username, password, fullname);
+                this.users.push(newUser);
+                return 'Đăng ký thành công!';
+            }
 
-The React Native community has spent years refining approaches to navigation, accessing native APIs, dealing with native dependencies, and more. Most apps need these core features. A React Native Framework provides them from the start of your app.
+            login(username, password) {
+                const user = this.users.find(user => user.username === username);
+                if (!user) return 'Tài khoản không tồn tại!';
+                if (user.locked) return 'Tài khoản đã bị khóa!';
+                if (user.password !== password) return 'Mật khẩu không chính xác!';
+                this.currentUser = user;
+                return `Đăng nhập thành công! Xin chào, ${user.fullname}`;
+            }
 
-Without a Framework, you’ll either have to write your own solutions to implement core features, or you’ll have to piece together a collection of pre-existing libraries to create a skeleton of a Framework. This takes real work, both when starting your app, then later when maintaining it.
+            logout() {
+                if (!this.currentUser) return 'Bạn chưa đăng nhập!';
+                this.currentUser = null;
+                return 'Đã đăng xuất!';
+            }
 
-If your app has unusual constraints that are not served well by a Framework, or you prefer to solve these problems yourself, you can make a React Native app without a Framework using Android Studio, Xcode. If you’re interested in this path, learn how to [set up your environment](set-up-your-environment) and how to [get started without a framework](getting-started-without-a-framework).
+            lockAccount() {
+                if (!this.currentUser) return 'Bạn chưa đăng nhập!';
+                this.currentUser.locked = true;
+                return `Tài khoản ${this.currentUser.username} đã bị khóa!`;
+            }
 
-</details>
+            addBalance(amount) {
+                if (!this.currentUser) return 'Bạn chưa đăng nhập!';
+                if (this.currentUser.locked) return 'Tài khoản của bạn đã bị khóa!';
+                this.currentUser.balance += amount;
+                return `Số dư mới: ${this.currentUser.formatBalance()}`;
+            }
 
-## Start a new React Native project with Expo
+            subtractBalance(amount) {
+                if (!this.currentUser) return 'Bạn chưa đăng nhập!';
+                if (this.currentUser.locked) return 'Tài khoản của bạn đã bị khóa!';
+                if (this.currentUser.balance < amount) return 'Số dư không đủ!';
+                this.currentUser.balance -= amount;
+                return `Số dư mới: ${this.currentUser.formatBalance()}`;
+            }
 
-<PlatformSupport platforms={['android', 'ios', 'tv', 'web']} />
+            showBalance() {
+                if (!this.currentUser) return 'Bạn chưa đăng nhập!';
+                return `Số dư của bạn: ${this.currentUser.formatBalance()}`;
+            }
+        }
 
-Expo is a production-grade React Native Framework. Expo provides developer tooling that makes developing apps easier, such as file-based routing, a standard library of native modules, and much more.
+        const auth = new AuthSystem();
 
-Expo's Framework is free and open source, with an active community on [GitHub](https://github.com/expo) and [Discord](https://chat.expo.dev). The Expo team works in close collaboration with the React Native team at Meta to bring the latest React Native features to the Expo SDK.
+        function registerUser() {
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const fullname = document.getElementById('regFullname').value;
+            showMessage(auth.register(username, password, fullname));
+        }
 
-The team at Expo also provides Expo Application Services (EAS), an optional set of services that complements Expo, the Framework, in each step of the development process.
+        function loginUser() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            showMessage(auth.login(username, password));
+        }
 
-To create a new Expo project, run the following in your terminal:
+        function logoutUser() {
+            showMessage(auth.logout());
+        }
 
-```shell
-npx create-expo-app@latest
-```
+        function showBalance() {
+            showMessage(auth.showBalance());
+        }
 
-Once you’ve created your app, check out the rest of Expo’s getting started guide to start developing your app.
+        function addMoney(amount) {
+            showMessage(auth.addBalance(amount));
+        }
 
-<BoxLink href="https://docs.expo.dev/get-started/set-up-your-environment">Continue with Expo</BoxLink>
+        function subtractMoney(amount) {
+            showMessage(auth.subtractBalance(amount));
+        }
+
+        function lockAccount() {
+            showMessage(auth.lockAccount());
+        }
+
+        function showMessage(message) {
+            document.getElementById('message').innerText = message;
+        }
+    </script>
+</body>
+</html>
